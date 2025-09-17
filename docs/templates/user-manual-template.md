@@ -1,132 +1,175 @@
-# 智能家居控制系统用户手册模板
+# Smart Home Control System User Manual
 
-## Overview（概述）
+## Overview
 
-### 系统简介
-智能家居控制系统是一个集成化的IoT平台，支持多种智能设备的统一管理和控制。
+### Introduction
+The Smart Home Control System is a comprehensive solution designed to manage and automate various smart devices in your home. This system provides centralized control, automation capabilities, and real-time monitoring of your smart home ecosystem.
 
-### 主要功能
-- 设备连接与管理
-- 场景自动化控制
-- 能源监控与分析
-- 安全监控与报警
-- 远程访问与控制
+### Key Features
+- Centralized device management
+- Automated scheduling and routines
+- Remote access and control
+- Energy monitoring and optimization
+- Security and safety integration
+- Voice assistant compatibility
 
-### 系统要求
-- 网络连接：WiFi 2.4GHz/5GHz
-- 操作系统：iOS 12+, Android 8+
-- 浏览器：Chrome 70+, Safari 12+, Firefox 65+
+### System Requirements
+- Internet connection (Wi-Fi/Ethernet)
+- Compatible smart devices
+- Mobile app or web browser access
+- Minimum 2GB RAM for optimal performance
 
-## Device Setup（设备设置）
+## Device Setup
 
-### 初始配置
-1. 下载并安装智能家居控制APP
-2. 创建用户账户并登录
-3. 扫描设备二维码或手动添加设备
-4. 配置网络连接参数
-5. 完成设备配对和认证
+### Initial Setup Process
+1. **System Installation**
+   - Download and install the Smart Home Control System application
+   - Create your user account with secure credentials
+   - Connect the system to your home network
 
-### 设备类型支持
-- 智能照明设备
-- 温控系统
-- 安防摄像头
-- 门锁系统
-- 传感器设备
-- 智能插座
+2. **Device Discovery**
+   - The system will automatically scan for compatible devices
+   - Follow on-screen instructions to add devices to your network
+   - Ensure devices are in pairing mode during discovery
 
-### 网络配置
-- 确保设备与路由器在同一网络
-- 配置端口转发（如需要）
-- 设置静态IP地址（推荐）
+3. **Network Configuration**
+   - Configure Wi-Fi settings for wireless devices
+   - Set up network security protocols
+   - Establish device naming conventions
 
-## Feature Guide（功能指南）
+### Supported Device Types
+- **Lighting**: Smart bulbs, switches, dimmers
+- **Climate**: Thermostats, HVAC controllers
+- **Security**: Cameras, motion sensors, door locks
+- **Entertainment**: Smart TVs, speakers, streaming devices
+- **Appliances**: Smart refrigerators, washers, ovens
+- **Energy**: Smart plugs, energy monitors
 
-### 设备控制
-- 单个设备控制
-- 批量设备操作
-- 定时控制设置
-- 条件触发控制
+### Connection Protocols
+- Wi-Fi (2.4GHz/5GHz)
+- Bluetooth Low Energy (BLE)
+- Zigbee
+- Z-Wave
+- Thread
+- Matter
 
-### 场景管理
-- 创建自定义场景
-- 预设场景模板
-- 场景调度设置
-- 场景分享功能
+## Feature Guide
 
-### 能源监控
-- 实时能耗显示
-- 历史数据统计
-- 能耗分析报告
-- 节能建议推送
+### Dashboard Overview
+The main dashboard provides:
+- Real-time status of all connected devices
+- Quick access to frequently used controls
+- Energy consumption metrics
+- Security alerts and notifications
+- Weather integration
 
-### 安全功能
-- 实时监控画面
-- 移动侦测报警
-- 门禁记录查询
-- 紧急联系设置
+### Automation & Scenes
 
-## Troubleshooting（故障排除）
+#### Creating Automations
+1. **Time-based Automations**
+   - Schedule device actions at specific times
+   - Create sunrise/sunset triggers
+   - Set up daily/weekly routines
 
-### 常见问题
+2. **Event-based Automations**
+   - Motion detection triggers
+   - Door/window sensor events
+   - Temperature/humidity changes
+   - Voice command triggers
 
-#### 设备连接问题
-**问题**：设备无法连接到网络
-**解决方案**：
-1. 检查设备电源状态
-2. 确认WiFi密码正确
-3. 重启设备并重新配置
-4. 检查路由器设置
+#### Scene Management
+- **Create Scenes**: Group multiple device actions
+- **Save Presets**: Save favorite configurations
+- **Share Scenes**: Export/import scene configurations
+- **Scene Scheduling**: Automate scene activation
 
-#### 控制响应延迟
-**问题**：设备控制响应缓慢
-**解决方案**：
-1. 检查网络信号强度
-2. 重启路由器
-3. 更新设备固件
-4. 检查APP版本
+### Remote Access
+- **Mobile App**: Full control from your smartphone
+- **Web Portal**: Access from any web browser
+- **Voice Control**: Integration with popular voice assistants
+- **API Access**: Developer access for custom integrations
 
-#### 场景执行失败
-**问题**：自动化场景无法正常执行
-**解决方案**：
-1. 检查场景配置参数
-2. 确认设备状态正常
-3. 验证触发条件设置
-4. 重新创建场景
+### Energy Management
+- Real-time energy monitoring
+- Usage statistics and reports
+- Cost calculation and budgeting
+- Peak usage alerts
+- Energy-saving recommendations
 
-### 技术支持
-- 在线帮助文档
-- 客服热线：400-xxx-xxxx
-- 邮箱支持：support@smarthome.com
-- 社区论坛：forum.smarthome.com
+## Troubleshooting
 
-## Safety Guidelines（安全指南）
+### Common Issues & Solutions
 
-### 电气安全
-- 使用符合国家标准的电源适配器
-- 避免在潮湿环境中使用设备
-- 定期检查电源线和插头状态
-- 不要私自拆解设备
+#### Connection Problems
+- **Device Not Found**: Ensure device is in pairing mode and within range
+- **Wi-Fi Connection Issues**: Check router settings and signal strength
+- **Bluetooth Pairing Failed**: Restart both devices and try again
 
-### 网络安全
-- 定期更新设备固件
-- 使用强密码保护账户
-- 启用双因素认证
-- 避免使用公共WiFi进行控制
+#### Performance Issues
+- **System Slow**: Close unused applications, check internet speed
+- **Automations Not Triggering**: Verify sensor status and automation settings
+- **App Crashes**: Update to latest version, clear app cache
 
-### 隐私保护
-- 合理设置摄像头监控范围
-- 定期清理历史数据
-- 注意数据分享权限设置
-- 遵守当地隐私法规
+#### Device-Specific Issues
+- **Lights Flickering**: Check bulb compatibility and power supply
+- **Thermostat Not Responding**: Verify temperature sensor calibration
+- **Camera Offline**: Check network connection and power source
 
-### 紧急情况处理
-- 火灾报警：立即拨打119
-- 医疗紧急情况：拨打120
-- 安全威胁：拨打110
-- 系统故障：联系技术支持
+### Error Codes
+- **E100**: Network connection error
+- **E201**: Device communication timeout
+- **E305**: Authentication failure
+- **E404**: Device not found
+- **E500**: Internal system error
+
+### Factory Reset Procedures
+- **Soft Reset**: Restart system without losing configurations
+- **Hard Reset**: Complete system wipe and restore to defaults
+- **Device Reset**: Individual device factory reset procedures
+
+## Safety Guidelines
+
+### Electrical Safety
+- Always use certified electrical components
+- Ensure proper grounding of all devices
+- Avoid overloading electrical circuits
+- Use surge protectors for sensitive equipment
+
+### Network Security
+- Change default passwords immediately
+- Enable two-factor authentication
+- Regular firmware updates
+- Secure Wi-Fi network with WPA3 encryption
+- Monitor connected devices regularly
+
+### Physical Safety
+- Proper device installation and mounting
+- Avoid water exposure for electrical devices
+- Keep devices away from heat sources
+- Regular maintenance and inspection
+
+### Privacy Protection
+- Review and configure privacy settings
+- Understand data collection policies
+- Regular security audits
+- Secure remote access configurations
+
+### Emergency Procedures
+- **Power Outage**: System will safely shut down and restart
+- **Security Breach**: Immediate lockdown procedures
+- **Device Malfunction**: Safe shutdown and isolation
+- **Fire/Smoke Detection**: Emergency notification protocols
+
+### Maintenance Schedule
+- **Daily**: Check system status and notifications
+- **Weekly**: Review automation performance
+- **Monthly**: Update software and firmware
+- **Quarterly**: Security audit and backup
+- **Annually**: Comprehensive system review
 
 ---
 
-*本手册版本：v1.0*  
-*最后更新：2025-09-17*  
-*技术支持：support@smarthome.com*
+*This user manual template is automatically generated. For specific device instructions, refer to individual device documentation.*
+
+*Last Updated: {{date}}*
+*System Version: {{version}}*
