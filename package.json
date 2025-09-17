@@ -1,0 +1,57 @@
+{
+    "name": "smart-home-control-system",
+    "version": "1.0.0",
+    "description": "智能家居控制系统 - 集成化IoT平台，支持多种智能设备的统一管理和控制",
+    "main": "src/index.js",
+    "scripts": {
+      "start": "node src/index.js",
+      "dev": "nodemon src/index.js",
+      "test": "jest",
+      "lint": "eslint src/",
+      "build": "webpack --mode production",
+      "generate-manual": "python scripts/generate-user-manual.py",
+      "validate-manual": "python scripts/validate-manual.py"
+    },
+    "keywords": [
+      "smart-home",
+      "iot",
+      "home-automation",
+      "device-control",
+      "energy-monitoring",
+      "security"
+    ],
+    "author": "smc1040937705",
+    "license": "MIT",
+    "dependencies": {
+      "express": "^4.18.2",
+      "socket.io": "^4.7.2",
+      "mqtt": "^4.3.7",
+      "mongoose": "^7.4.3",
+      "jsonwebtoken": "^9.0.2",
+      "bcryptjs": "^2.4.3",
+      "cors": "^2.8.5",
+      "helmet": "^7.0.0",
+      "dotenv": "^16.3.1",
+      "winston": "^3.10.0",
+      "node-cron": "^3.0.2"
+    },
+    "devDependencies": {
+      "nodemon": "^3.0.1",
+      "jest": "^29.6.2",
+      "eslint": "^8.47.0",
+      "webpack": "^5.88.2",
+      "webpack-cli": "^5.1.4"
+    },
+    "engines": {
+      "node": ">=16.0.0",
+      "npm": ">=8.0.0"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/smc1040937705/smart-home-control-system.git"
+    },
+    "bugs": {
+      "url": "https://github.com/smc1040937705/smart-home-control-system/issues"
+    },
+    "homepage": "https://github.com/smc1040937705/smart-home-control-system#readme"
+  }
