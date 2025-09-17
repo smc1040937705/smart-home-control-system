@@ -4,22 +4,22 @@ on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'docs/templates/**'
+      - 'docs/user-manual-template.md'
       - 'scripts/generate-user-manual.py'
   pull_request:
     branches: [ main ]
     paths:
-      - 'docs/templates/**'
+      - 'docs/user-manual-template.md'
       - 'scripts/generate-user-manual.py'
   workflow_dispatch:
     inputs:
-      version:
-        description: 'System version number'
-        required: false
-        default: '1.0.0'
+      system_version:
+        description: 'System version to include in manual'
+        required: true
+        default: '2.0.0'
 
 jobs:
-  generate-user-manual:
+  generate-manual:
     runs-on: ubuntu-latest
     
     steps:
@@ -32,13 +32,10 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-        cache: 'pip'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Add any required Python packages here
-        pip install -r requirements.txt || echo "No requirements.txt found"
 
     - name: Validate template structure
       run: |
@@ -46,139 +43,91 @@ jobs:
 
     - name: Generate user manual
       run: |
-        VERSION="${{ github.event.inputs.version || '1.0.0' }}"
-        python scripts/generate-user-manual.py --version "$VERSION"
+        python scripts/generate-user-manual.py --system-version ${{ github.event.inputs.system_version || '2.0.0' }}
 
-    - name: Upload generated manual
+    - name: Upload generated manual as artifact
       uses: actions/upload-artifact@v4
       with:
         name: user-manual
         path: docs/user-manual.md
 
-    - name: Upload validation report
-      uses: actions/upload-artifact@v4
-      with:
-        name: validation-report
-        path: reports/validation-report.json
-
-    - name: Verify manual generation
+    - name: Run comprehensive validation
+      id: validation
       run: |
+        # Check if manual was generated
         if [ ! -f "docs/user-manual.md" ]; then
-          echo "ERROR: User manual was not generated"
+          echo "::error::User manual was not generated"
           exit 1
         fi
         
-        # Check if manual contains all required sections
-        if ! grep -q "## Overview" docs/user-manual.md || \
-           ! grep -q "## Device Setup" docs/user-manual.md || \
-           ! grep -q "## Feature Guide" docs/user-manual.md || \
-           ! grep -q "## Troubleshooting" docs/user-manual.md || \
-           ! grep -q "## Safety Guidelines" docs/user-manual.md; then
-          echo "ERROR: Generated manual is missing required sections"
-          exit 1
+        # Check file size
+        manual_size=$(wc -c < "docs/user-manual.md")
+        if [ $manual_size -lt 5000 ]; then
+          echo "::warning::Generated manual seems too small ($manual_size bytes)"
         fi
         
-        echo "✓ Manual verification passed"
-
-  validation-report:
-    runs-on: ubuntu-latest
-    needs: generate-user-manual
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Download validation report
-      uses: actions/download-artifact@v4
-      with:
-        name: validation-report
-
-    - name: Parse and display validation results
-      run: |
-        if [ -f "validation-report.json" ]; then
-          echo "📊 Validation Report Summary:"
-          echo "================================"
-          
-          # Use jq to parse JSON if available
-          if command -v jq &> /dev/null; then
-            STATUS=$(jq -r '.status' validation-report.json)
-            ALL_SECTIONS=$(jq -r '.validation.all_sections_present' validation-report.json)
-            ISSUES_COUNT=$(jq -r '.validation.format_issues_count' validation-report.json)
-            
-            echo "Status: $STATUS"
-            echo "All sections present: $ALL_SECTIONS"
-            echo "Format issues: $ISSUES_COUNT"
-            
-            if [ "$ISSUES_COUNT" -gt 0 ]; then
-              echo "\n⚠️  Format issues found:"
-              jq -r '.validation.format_issues[]' validation-report.json | while read issue; do
-                echo "  - $issue"
-              done
-            fi
-            
-            if [ "$STATUS" = "PASS" ]; then
-              echo "\n✅ All validation checks passed!"
-            else
-              echo "\n❌ Validation failed or has warnings"
-              exit 1
-            fi
-          else
-            echo "jq not available, showing raw JSON:"
-            cat validation-report.json
+        # Check for required sections
+        required_sections=("Overview" "Device Setup" "Feature Guide" "Troubleshooting" "Safety Guidelines")
+        for section in "${required_sections[@]}"; do
+          if ! grep -q "## $section" "docs/user-manual.md"; then
+            echo "::error::Missing required section: $section"
+            echo "validation_result=failed" >> $GITHUB_OUTPUT
+            exit 1
           fi
-        else
-          echo "ERROR: Validation report not found"
-          exit 1
-        fi
+        done
+        
+        echo "::notice::Manual validation passed successfully"
+        echo "validation_result=passed" >> $GITHUB_OUTPUT
 
-  create-pr-comment:
+    - name: Create validation report
+      if: always()
+      run: |
+        echo "# User Manual Generation Report" >> $GITHUB_STEP_SUMMARY
+        echo "**Generated on**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Template**: docs/user-manual-template.md" >> $GITHUB_STEP_SUMMARY
+        echo "**Output**: docs/user-manual.md" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "docs/user-manual.md" ]; then
+          manual_size=$(wc -c < "docs/user-manual.md")
+          line_count=$(wc -l < "docs/user-manual.md")
+          echo "## Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- File size: $manual_size bytes" >> $GITHUB_STEP_SUMMARY
+          echo "- Line count: $line_count lines" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "## Required Sections Check" >> $GITHUB_STEP_SUMMARY
+        required_sections=("Overview" "Device Setup" "Feature Guide" "Troubleshooting" "Safety Guidelines")
+        for section in "${required_sections[@]}"; do
+          if grep -q "## $section" "docs/user-manual.md"; then
+            echo "- ✅ $section" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ $section" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+
+  deploy-docs:
     runs-on: ubuntu-latest
-    needs: [generate-user-manual, validation-report]
-    if: github.event_name == 'pull_request'
+    needs: generate-manual
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download validation report
+    - name: Download generated manual
       uses: actions/download-artifact@v4
       with:
-        name: validation-report
+        name: user-manual
+        path: docs/
 
-    - name: Create PR comment with validation results
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const report = require('./validation-report.json');
-          
-          let comment = `## 📋 User Manual Validation Report\n\n`;
-          comment += `**Status:** ${report.status === 'PASS' ? '✅ PASS' : '⚠️ WARNING'}\n`;
-          comment += `**Timestamp:** ${new Date(report.timestamp).toLocaleString()}\n\n`;
-          
-          comment += `### 📊 Validation Summary\n`;
-          comment += `- **All required sections present:** ${report.validation.all_sections_present ? '✅ Yes' : '❌ No'}\n`;
-          comment += `- **Format issues found:** ${report.validation.format_issues_count}\n`;
-          comment += `- **Total lines:** ${report.statistics.total_lines}\n`;
-          comment += `- **Word count:** ${report.statistics.word_count}\n\n`;
-          
-          comment += `### 📑 Section Validation\n`;
-          Object.entries(report.validation.structure).forEach(([section, present]) => {
-            comment += `- **${section}:** ${present ? '✅ Present' : '❌ Missing'}\n`;
-          });
-          
-          if (report.validation.format_issues_count > 0) {
-            comment += `\n### ⚠️ Format Issues\n`;
-            report.validation.format_issues.forEach(issue => {
-              comment += `- ${issue}\n`;
-            });
-          }
-          
-          comment += `\n---\n*Generated by User Manual Generation Workflow*`;
-          
-          github.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-            body: comment
-          });
+    - name: Verify manual deployment
+      run: |
+        if [ -f "docs/user-manual.md" ]; then
+          echo "✅ User manual ready for deployment"
+          # Add deployment steps here (e.g., GitHub Pages, documentation site)
+        else
+          echo "❌ User manual not found for deployment"
+          exit 1
+        fi

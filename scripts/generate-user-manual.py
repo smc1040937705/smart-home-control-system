@@ -7,224 +7,172 @@ This script generates user manuals from templates with validation and formatting
 
 import os
 import sys
-import json
+import re
 import argparse
 import datetime
-import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Tuple
 
-
-def validate_template_structure(content: str) -> Dict[str, bool]:
-    """Validate that the template contains all required sections."""
-    required_sections = [
-        "Overview",
-        "Device Setup", 
-        "Feature Guide",
-        "Troubleshooting",
-        "Safety Guidelines"
-    ]
-    
-    validation_results = {}
-    
-    for section in required_sections:
-        # Check for section headers (## Section Name)
-        pattern = rf'^##\s+{re.escape(section)}\s*$'
-        if re.search(pattern, content, re.MULTILINE):
-            validation_results[section] = True
-        else:
-            validation_results[section] = False
-    
-    return validation_results
-
-
-def validate_markdown_format(content: str) -> List[str]:
-    """Validate Markdown formatting and return any issues found."""
-    issues = []
-    
-    # Check for proper header structure
-    lines = content.split('\n')
-    header_levels = []
-    
-    for i, line in enumerate(lines, 1):
-        # Check header consistency
-        if line.startswith('#'):
-            level = len(line.split(' ')[0])
-            header_levels.append((level, i))
-    
-    # Check header hierarchy (should not skip levels)
-    if header_levels:
-        previous_level = header_levels[0][0]
-        for level, line_num in header_levels[1:]:
-            if level > previous_level + 1:
-                issues.append(f"Header level jump from {previous_level} to {level} at line {line_num}")
-            previous_level = level
-    
-    # Check for broken links
-    link_pattern = r'\[([^\]]+)\]\(([^\)]+)\)'
-    for match in re.finditer(link_pattern, content):
-        link_text, link_url = match.groups()
-        if not link_url.strip():
-            issues.append(f"Empty link URL for '{link_text}'")
-    
-    return issues
-
-
-def generate_user_manual(template_path: str, output_path: str, variables: Optional[Dict] = None) -> bool:
-    """Generate user manual from template with variable substitution."""
-    
-    if variables is None:
-        variables = {}
-    
-    # Set default variables
-    default_vars = {
-        'date': datetime.datetime.now().strftime('%Y-%m-%d'),
-        'version': '1.0.0',
-        'system_name': 'Smart Home Control System'
-    }
-    default_vars.update(variables)
-    
-    try:
-        # Read template
-        with open(template_path, 'r', encoding='utf-8') as f:
-            template_content = f.read()
+class UserManualGenerator:
+    def __init__(self):
+        self.required_sections = [
+            "Overview",
+            "Device Setup", 
+            "Feature Guide",
+            "Troubleshooting",
+            "Safety Guidelines"
+        ]
         
-        # Validate template structure
-        validation = validate_template_structure(template_content)
-        missing_sections = [section for section, present in validation.items() if not present]
+        self.validation_errors = []
+        self.validation_warnings = []
+    
+    def load_template(self, template_path: str) -> str:
+        """Load the user manual template file."""
+        try:
+            with open(template_path, 'r', encoding='utf-8') as file:
+                return file.read()
+        except FileNotFoundError:
+            self.validation_errors.append(f"Template file not found: {template_path}")
+            return ""
+        except Exception as e:
+            self.validation_errors.append(f"Error reading template: {str(e)")
+            return ""
+    
+    def validate_template_structure(self, content: str) -> bool:
+        """Validate that the template contains all required sections."""
+        valid = True
         
-        if missing_sections:
-            print(f"ERROR: Missing required sections: {', '.join(missing_sections)}")
+        for section in self.required_sections:
+            # Look for section headers (## followed by section name)
+            pattern = rf'^##\s+{re.escape(section)}\s*$'
+            if not re.search(pattern, content, re.MULTILINE):
+                self.validation_errors.append(f"Missing required section: {section}")
+                valid = False
+        
+        return valid
+    
+    def validate_content_quality(self, content: str) -> bool:
+        """Perform basic content quality checks."""
+        valid = True
+        
+        # Check for placeholder content
+        placeholders = ["{{.*?}}", "\[.*?\]", "TODO", "FIXME"]
+        for placeholder in placeholders:
+            matches = re.findall(placeholder, content)
+            if matches:
+                self.validation_warnings.append(f"Found placeholder content: {matches[:3]}")
+        
+        # Check minimum content length
+        if len(content.strip()) < 1000:
+            self.validation_warnings.append("Template content seems very short")
+        
+        return valid
+    
+    def generate_manual(self, template_content: str, output_path: str, **replacements) -> bool:
+        """Generate the final user manual with replacements."""
+        try:
+            # Apply replacements
+            manual_content = template_content
+            for key, value in replacements.items():
+                manual_content = manual_content.replace(f"{{{{{key}}}}}", str(value))
+            
+            # Ensure output directory exists
+            output_dir = os.path.dirname(output_path)
+            if output_dir:
+                os.makedirs(output_dir, exist_ok=True)
+            
+            # Write the generated manual
+            with open(output_path, 'w', encoding='utf-8') as file:
+                file.write(manual_content)
+            
+            print(f"✓ User manual generated: {output_path}")
+            return True
+            
+        except Exception as e:
+            self.validation_errors.append(f"Error generating manual: {str(e)}")
             return False
-        
-        # Validate Markdown format
-        format_issues = validate_markdown_format(template_content)
-        if format_issues:
-            print("WARNING: Format issues found:")
-            for issue in format_issues:
-                print(f"  - {issue}")
-        
-        # Perform variable substitution
-        manual_content = template_content
-        for key, value in default_vars.items():
-            placeholder = f'{{{{{key}}}}}'
-            manual_content = manual_content.replace(placeholder, str(value))
-        
-        # Ensure output directory exists
-        output_dir = os.path.dirname(output_path)
-        if output_dir:
-            os.makedirs(output_dir, exist_ok=True)
-        
-        # Write generated manual
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(manual_content)
-        
-        print(f"✓ User manual generated successfully: {output_path}")
-        print(f"✓ Template validation passed")
-        
-        if format_issues:
-            print(f"⚠  {len(format_issues)} format warnings (manual will still be generated)")
-        
-        return True
-        
-    except FileNotFoundError:
-        print(f"ERROR: Template file not found: {template_path}")
-        return False
-    except Exception as e:
-        print(f"ERROR: Failed to generate manual: {e}")
-        return False
-
-
-def generate_validation_report(template_path: str, report_path: str) -> bool:
-    """Generate a detailed validation report for the template."""
     
-    try:
-        with open(template_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+    def run_validation_report(self) -> bool:
+        """Generate a validation report."""
+        if self.validation_errors:
+            print("\n❌ VALIDATION ERRORS:")
+            for error in self.validation_errors:
+                print(f"  - {error}")
         
-        # Perform validations
-        structure_validation = validate_template_structure(content)
-        format_issues = validate_markdown_format(content)
+        if self.validation_warnings:
+            print("\n⚠️  VALIDATION WARNINGS:")
+            for warning in self.validation_warnings:
+                print(f"  - {warning}")
         
-        # Calculate statistics
-        total_lines = len(content.split('\n'))
-        word_count = len(content.split())
-        section_count = sum(1 for line in content.split('\n') if line.startswith('## '))
-        
-        # Generate report
-        report = {
-            'timestamp': datetime.datetime.now().isoformat(),
-            'template_file': template_path,
-            'validation': {
-                'structure': structure_validation,
-                'all_sections_present': all(structure_validation.values()),
-                'format_issues': format_issues,
-                'format_issues_count': len(format_issues)
-            },
-            'statistics': {
-                'total_lines': total_lines,
-                'word_count': word_count,
-                'section_count': section_count,
-                'file_size_bytes': len(content.encode('utf-8'))
-            },
-            'status': 'PASS' if all(structure_validation.values()) and not format_issues else 'WARNING'
+        return len(self.validation_errors) == 0
+    
+    def generate_validation_summary(self) -> Dict:
+        """Generate a summary of validation results."""
+        return {
+            "errors": self.validation_errors,
+            "warnings": self.validation_warnings,
+            "is_valid": len(self.validation_errors) == 0,
+            "required_sections_present": all(
+                section in self.required_sections for section in self.required_sections
+            )
         }
-        
-        # Ensure report directory exists
-        report_dir = os.path.dirname(report_path)
-        if report_dir:
-            os.makedirs(report_dir, exist_ok=True)
-        
-        # Write JSON report
-        with open(report_path, 'w', encoding='utf-8') as f:
-            json.dump(report, f, indent=2, ensure_ascii=False)
-        
-        print(f"✓ Validation report generated: {report_path}")
-        return True
-        
-    except Exception as e:
-        print(f"ERROR: Failed to generate validation report: {e}")
-        return False
-
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate user manuals from templates')
-    parser.add_argument('--template', '-t', default='docs/templates/user-manual-template.md',
+    parser = argparse.ArgumentParser(description='Generate user manual from template')
+    parser.add_argument('--template', '-t', default='docs/user-manual-template.md', 
                        help='Path to template file')
     parser.add_argument('--output', '-o', default='docs/user-manual.md',
                        help='Output path for generated manual')
-    parser.add_argument('--report', '-r', default='reports/validation-report.json',
-                       help='Path for validation report')
-    parser.add_argument('--version', '-v', help='System version number')
-    parser.add_argument('--validate-only', action='store_true',
-                       help='Only validate template without generating manual')
+    parser.add_argument('--validate-only', '-v', action='store_true',
+                       help='Only validate template without generating output')
+    parser.add_argument('--system-version', default='2.0.0',
+                       help='System version to include in manual')
     
     args = parser.parse_args()
     
-    # Prepare variables
-    variables = {}
-    if args.version:
-        variables['version'] = args.version
+    generator = UserManualGenerator()
     
-    print("🔧 Smart Home Control System - User Manual Generator")
-    print("=" * 60)
+    # Load and validate template
+    template_content = generator.load_template(args.template)
+    
+    if not template_content:
+        print("❌ Failed to load template")
+        generator.run_validation_report()
+        sys.exit(1)
+    
+    # Validate template structure
+    structure_valid = generator.validate_template_structure(template_content)
+    content_valid = generator.validate_content_quality(template_content)
     
     if args.validate_only:
-        # Only validate and generate report
-        success = generate_validation_report(args.template, args.report)
-        sys.exit(0 if success else 1)
-    else:
-        # Generate manual and report
-        manual_success = generate_user_manual(args.template, args.output, variables)
-        report_success = generate_validation_report(args.template, args.report)
+        generator.run_validation_report()
+        sys.exit(0 if structure_valid and content_valid else 1)
+    
+    # Generate manual with replacements
+    replacements = {
+        'CURRENT_DATE': datetime.datetime.now().strftime('%Y-%m-%d'),
+        'SYSTEM_VERSION': args.system_version
+    }
+    
+    success = generator.generate_manual(template_content, args.output, **replacements)
+    
+    # Run validation report
+    generator.run_validation_report()
+    
+    if success and structure_valid and content_valid:
+        print("\n✅ User manual generation completed successfully!")
         
-        if manual_success and report_success:
-            print("\n🎉 Generation completed successfully!")
-            sys.exit(0)
-        else:
-            print("\n❌ Generation failed!")
-            sys.exit(1)
-
+        # Generate validation summary for CI/CD
+        summary = generator.generate_validation_summary()
+        print(f"\n📊 Validation Summary:")
+        print(f"  - Errors: {len(summary['errors'])}")
+        print(f"  - Warnings: {len(summary['warnings'])}")
+        print(f"  - Required Sections: {len(summary['required_sections_present'])}/{len(generator.required_sections)}")
+        
+        sys.exit(0)
+    else:
+        print("\n❌ User manual generation failed!")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
