@@ -1,0 +1,16 @@
+# Python dependencies for User Manual Generator
+# This file ensures consistent environment for the generation script
+
+# Core dependencies
+python-dateutil==2.8.2
+
+# Development/testing (optional)
+pytest==7.4.0
+pytest-cov==4.1.0
+
+# Markdown validation tools (future enhancements)
+# markdown==3.4.3
+# beautifulsoup4==4.12.2
+
+# Note: The generator script uses only standard library modules
+# These dependencies are for future enhancements and testing
